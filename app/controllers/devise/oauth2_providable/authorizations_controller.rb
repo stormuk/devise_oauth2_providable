@@ -32,7 +32,13 @@ module Devise
       def authorize_endpoint(allow_approval = false)
         Rack::OAuth2::Server::Authorize.new do |req, res|
           @client = Client.find_by_identifier(req.client_id) || req.bad_request!
-          res.redirect_uri = @redirect_uri = req.verify_redirect_uri!(@client.redirect_uri)
+
+
+          redirect_uri = request.query_parameters[:redirect_uri] || request.request_parameters[:redirect_uri] || @client.redirect_uri
+
+          logger.debug "GOING TO REDIRECT TO = " + redirect_uri
+
+          res.redirect_uri = @redirect_uri = req.verify_redirect_uri!(redirect_uri)
           if allow_approval || @client.preapproved
             if params[:approve].present? || @client.preapproved
               case req.response_type
